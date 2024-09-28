@@ -18,18 +18,21 @@ class Calculator(QWidget):
 
         # The prompt sent to gemin AI
         self.gen_prompt = """
-            For the following mathematical expression or function
-            I only wish to see the answer. If the expression or function is
-            wrong, reply with: 'Incorrect expression'. 
+            Evaluate the following mathematical expression.
+            Provide only numerical answers.
+            If not a whole number then do not exceed 4 decimal places.
+            Here's the format of what I want to see:
+            Steps:
+            Answer:
             """
-
+        
         # Configure and instantiate the AI using my api key and model
         genai.configure(api_key=SECRET)
         self.model = genai.GenerativeModel("gemini-1.5-flash")
 
         # Window title and fixed sizing 
         self.setWindowTitle("Calculator")
-        self.setFixedSize(QSize(350, 350))
+        self.setFixedSize(QSize(450, 350))
 
         # Vbox (MAIN LAYOUT)
         self.vbox_main = QVBoxLayout()
@@ -38,12 +41,13 @@ class Calculator(QWidget):
         self.gridbox = QGridLayout()
 
         # Display string
+        self.expression_display = QLabel("")
         self.display = QLabel("")
         self.display.setStyleSheet("font-size: 40px;")
 
         # List of calculator buttons
         buttons = [
-            'back', 'C', '(', ')', '^',
+            'e', 'C', '(', ')', '^',
             'sin', '7', '8', '9', '/',
             'cos', '4', '5', '6', '*',
             'tan', '1', '2', '3', '-',
@@ -60,23 +64,33 @@ class Calculator(QWidget):
             self.gridbox.addWidget(btn, *position, alignment=Qt.AlignmentFlag.AlignBaseline)
 
         # Add both my gridlayout and display to the VBox main
+        self.vbox_main.addWidget(self.expression_display, alignment=Qt.AlignmentFlag.AlignRight)
         self.vbox_main.addWidget(self.display, alignment=Qt.AlignmentFlag.AlignRight)
         self.vbox_main.addLayout(self.gridbox)
 
         self.setLayout(self.vbox_main)
+
+    # String manipulation to extract answer
+    def extract_answer(self, ai_response):
+        answer = ai_response.split('\n')[-1]
+        answer = answer.split(" ")[-1]
+        return answer
 
     # For every button press, update the display
     def update_display(self, text):
         # Clear display if 'C' is pressed
         if text == 'C':
             self.display.setText("")
+            self.expression_display.setText("")
 
         # Sends mathematical expression to ai model
         elif text == '=':
+            expression = self.display.text()
+            self.expression_display.setText(expression)
             response = self.model.generate_content(self.gen_prompt + self.display.text())
-            self.display.setText("")
-            ai_result = response.text
-            self.display.setText(ai_result.strip())
+            answer = self.extract_answer(response.text.strip())
+            
+            self.display.setText(answer)
 
         # Back wroks as a backspace button
         elif text == 'back':
