@@ -92,11 +92,13 @@ class Calculator(QWidget):
             
             self.display.setText(answer)
 
-        # Back wroks as a backspace button
+        # button dosn't fit my calculator layout (discontinued)
+        '''
         elif text == 'back':
             current_text = self.display.text()
             backspace_text = current_text[:-1]
             self.display.setText(backspace_text)
+        '''
 
         # Append the pressed button's text to the display
         else:
